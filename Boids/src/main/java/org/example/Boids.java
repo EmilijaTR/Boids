@@ -8,7 +8,10 @@ public class Boids extends JPanel {
 
     public Boids() {
         setPreferredSize(new Dimension(640, 360));
-        flock.add(new Boid(640, 360));
+        for (int i = 0; i < 100; i++) {
+            flock.add(new Boid(640, 360));
+
+        }
 
         Timer timer = new Timer(16, e -> {
             for (Boid boid : flock) {
