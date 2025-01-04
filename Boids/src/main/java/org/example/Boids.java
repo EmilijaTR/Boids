@@ -15,6 +15,8 @@ public class Boids extends JPanel {
 
         Timer timer = new Timer(16, e -> {
             for (Boid boid : flock) {
+                boid.edges(640, 360);
+                boid.flock(flock);
                 boid.update(); //update the position of the boid
             }
             repaint();
