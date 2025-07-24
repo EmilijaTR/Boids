@@ -18,8 +18,8 @@ public class Boids extends JPanel {
         setLayout(new BorderLayout());
 
         for (int i = 0; i < numBoids; i++) {
-            Boid boid = new Boid(width, height);
-            Vector2D initialVelocity = boid.getVelocity();
+            Boid boid = new Boid(width, height, speed);
+            Vector3D initialVelocity = boid.getVelocity();
             initialVelocity.normalize();
             initialVelocity.multiply(speed);
             boid.setVelocity(initialVelocity);
@@ -53,7 +53,6 @@ public class Boids extends JPanel {
         sliderPanel.add(separationSlider);
 
         add(sliderPanel, BorderLayout.SOUTH);
-
 
         Timer timer = new Timer(16, e -> {  //60fps
 

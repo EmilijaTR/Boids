@@ -69,7 +69,7 @@ public class SetupFrame extends JFrame {
         gbc.gridy = 3;
         inputPanel.add(speedLabel, gbc);
 
-        JTextField speedField = createCustomTextField("2");
+        JTextField speedField = createCustomTextField("3");
         gbc.gridx = 1;
         gbc.gridy = 3;
         inputPanel.add(speedField, gbc);

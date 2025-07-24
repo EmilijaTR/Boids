@@ -1,43 +1,47 @@
-
 package org.example;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
 
 public class Boid {
-    private Vector2D position;
-    private Vector2D velocity;
-    private Vector2D acceleration;
+    private Vector3D position;
+    private Vector3D velocity;
+    private Vector3D acceleration;
 
-    private double maxForce = 0.2;
-    private double maxSpeed = 4;
+    private double maxForce = 0.3;
+    private double maxSpeed;
 
-    public Boid(double width, double height) {
-        this.position = new Vector2D(Math.random() * width, Math.random() * height);
-        this.velocity = Vector2D.random2D();
-        this.velocity.multiply(2 + Math.random() *2);
-        this.acceleration = new Vector2D(0, 0);
+    public Boid(double width, double height, double speed) {
+        this.position = new Vector3D(Math.random() * width, Math.random() * height, Math.random() * 100); // depth max 100
+        this.velocity = Vector3D.random3D();
+        this.velocity.multiply(2 + Math.random() * 2);
+        this.acceleration = new Vector3D(0, 0, 0);
+        this.maxSpeed = speed;
     }
 
-    public void setVelocity(Vector2D velocity) {
+    public void setVelocity(Vector3D velocity) {
         this.velocity = velocity;
     }
 
-    public Vector2D getVelocity() {
+    public Vector3D getVelocity() {
         return velocity;
     }
 
     public void edges(double width, double height) {
-        if(position.x > width) position.x = 0;
-        else if(position.x < 0) position.x = width;
+        if (position.x > width) position.x = 0;
+        else if (position.x < 0) position.x = width;
 
-        if(position.y > height) position.y = 0;
-        else if(position.y < 0) position.y = height;
+        if (position.y > height) position.y = 0;
+        else if (position.y < 0) position.y = height;
+
+        // For wrapping in depth (optional — or you can let z float freely)
+        if (position.z > 100) position.z = 0;
+        else if (position.z < 0) position.z = 100;
     }
 
-    public Vector2D alignment(ArrayList<Boid> boids) {
+    public Vector3D alignment(ArrayList<Boid> boids) {
         double perceptionRadius = 25;
-        Vector2D steering = new Vector2D(0, 0);
+        Vector3D steering = new Vector3D(0, 0, 0);
         int total = 0;
 
         for (Boid other : boids) {
@@ -59,9 +63,9 @@ public class Boid {
         return steering;
     }
 
-    public Vector2D cohesion(ArrayList<Boid> boids) {
+    public Vector3D cohesion(ArrayList<Boid> boids) {
         double perceptionRadius = 75;
-        Vector2D steering = new Vector2D(0, 0);
+        Vector3D steering = new Vector3D(0, 0, 0);
         int total = 0;
 
         for (Boid other : boids) {
@@ -83,16 +87,16 @@ public class Boid {
         return steering;
     }
 
-    public Vector2D separation(ArrayList<Boid> boids) {
+    public Vector3D separation(ArrayList<Boid> boids) {
         double perceptionRadius = 50;
-        Vector2D steering = new Vector2D(0, 0);
+        Vector3D steering = new Vector3D(0, 0, 0);
         int total = 0;
 
         for (Boid other : boids) {
             double d = position.distance(other.position);
             if (other != this && d < perceptionRadius) {
-                Vector2D diff = Vector2D.subtract(position, other.position);    //direction in oposite
-                diff.divide(d*d);   //closer the boid, stronger force to move
+                Vector3D diff = Vector3D.subtract(position, other.position);    //direction in oposite
+                diff.divide(d * d);   //closer the boid, stronger force to move
                 steering.add(diff);
                 total++;
             }
@@ -109,11 +113,11 @@ public class Boid {
     }
 
     public void flock(ArrayList<Boid> boids, double cohesionWeight, double alignmentWeight, double separationWeight) {
-        acceleration = new Vector2D(0, 0);
+        acceleration = new Vector3D(0, 0, 0);
 
-        Vector2D alignment = alignment(boids);
-        Vector2D cohesion = cohesion(boids);
-        Vector2D separation = separation(boids);
+        Vector3D alignment = alignment(boids);
+        Vector3D cohesion = cohesion(boids);
+        Vector3D separation = separation(boids);
 
         alignment.multiply(alignmentWeight);
         cohesion.multiply(cohesionWeight);
@@ -127,10 +131,14 @@ public class Boid {
     public void update() {
         position.add(velocity); //moves in the direction of the velocity
         velocity.add(acceleration); //changes the velocity based on the current acceleration
-        acceleration.multiply(0);//it is diff for every frame
+        velocity.limit(maxSpeed);
+        acceleration.multiply(0); //it is diff for every frame
     }
 
     public void show(Graphics g) {
-        g.fillOval((int) position.x - 4, (int) position.y - 4, 8, 8);
+        // size depends on z (depth) — closer (higher z) means larger
+        int size = (int) Math.max(2, Math.min(10, position.z * 0.1)); // scale z from 0–100 to 2–10
+
+        g.fillOval((int) position.x - size / 2, (int) position.y - size / 2, size, size);
     }
 }
