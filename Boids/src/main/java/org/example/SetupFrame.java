@@ -77,6 +77,18 @@ public class SetupFrame extends JFrame {
         add(titlePanel, BorderLayout.NORTH);
         add(inputPanel, BorderLayout.CENTER);
 
+        JLabel modeLabel = createCustomLabel("Simulation Mode:");
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        inputPanel.add(modeLabel, gbc);
+
+        String[] modes = {"Sequential", "Parallel", "Distributed"};
+        JComboBox<String> modeComboBox = new JComboBox<>(modes);
+        modeComboBox.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        inputPanel.add(modeComboBox, gbc);
+
         JButton startButton = new JButton("Start Simulation");
         startButton.setFont(new Font("Arial", Font.BOLD, 16));
         startButton.setForeground(Color.BLACK);
@@ -90,11 +102,14 @@ public class SetupFrame extends JFrame {
                     int width = Integer.parseInt(widthField.getText());
                     int height = Integer.parseInt(heightField.getText());
                     double speed = Double.parseDouble(speedField.getText());
+                    String selectedMode = (String) modeComboBox.getSelectedItem();
 
                     dispose(); //close setup
 
                     JFrame frame = new JFrame("Boids Simulation");
-                    Boids simulation = new Boids(numBoids, width, height, speed);
+                    //Boids simulation = new Boids(numBoids, width, height, speed);
+                    Boids simulation = new Boids(numBoids, width, height, speed, selectedMode);
+
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setMinimumSize(new Dimension(300, 300));
                     frame.add(simulation);

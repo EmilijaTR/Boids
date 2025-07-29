@@ -2,6 +2,7 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import org.example.ParallelBoidUpdater;
 
 public class Boids extends JPanel {
     private ArrayList<Boid> flock = new ArrayList<>();
@@ -13,9 +14,12 @@ public class Boids extends JPanel {
     private double alignmentWeight = 1.0;
     private double separationWeight = 1.0;
 
-    public Boids(int numBoids, int width, int height, double speed) {
+    private String mode;
+
+    public Boids(int numBoids, int width, int height, double speed, String mode) {
         setPreferredSize(new Dimension(width, height));
         setLayout(new BorderLayout());
+        this.mode = mode;
 
         for (int i = 0; i < numBoids; i++) {
             Boid boid = new Boid(width, height, speed);
@@ -64,11 +68,22 @@ public class Boids extends JPanel {
             int currentWidth = getWidth();
             int currentHeight = getHeight();
 
-            for (Boid boid : flock) {
-                boid.edges(currentWidth, currentHeight);
-                boid.flock(flock, cohesionWeight, alignmentWeight, separationWeight);
-                boid.update();
+//            for (Boid boid : flock) {
+//                boid.edges(currentWidth, currentHeight);
+//                boid.flock(flock, cohesionWeight, alignmentWeight, separationWeight);
+//                boid.update();
+//            }
+            if (mode.equals("Parallel")) {
+                ParallelBoidUpdater.update(flock, currentWidth, currentHeight,
+                        cohesionWeight, alignmentWeight, separationWeight);
+            } else {
+                for (Boid boid : flock) {
+                    boid.edges(currentWidth, currentHeight);
+                    boid.flock(flock, cohesionWeight, alignmentWeight, separationWeight);
+                    boid.update();
+                }
             }
+
             repaint();
         });
         timer.start();
