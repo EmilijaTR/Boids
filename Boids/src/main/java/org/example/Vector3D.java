@@ -1,8 +1,11 @@
 package org.example;
 
+import java.io.Serializable;
 import java.util.Random;
 
-public class Vector3D {
+public class Vector3D implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public double x, y, z;
 
     public Vector3D(double x, double y, double z) {

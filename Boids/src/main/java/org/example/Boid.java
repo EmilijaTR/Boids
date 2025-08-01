@@ -1,9 +1,12 @@
 package org.example;
 
 import java.awt.Graphics;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Boid {
+public class Boid implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Vector3D position;
     private Vector3D velocity;
     private Vector3D acceleration;
@@ -12,7 +15,12 @@ public class Boid {
     private double maxSpeed;
 
     public Boid(double width, double height, double speed) {
-        this.position = new Vector3D(Math.random() * width, Math.random() * height, Math.random() * 100); // depth max 100
+//        this.position = new Vector3D(Math.random() * width, Math.random() * height, Math.random() * 100); // depth max 100
+        this.position = new Vector3D(
+                Math.random() * width,
+                Math.random() * height,
+                30 + Math.random() * 40  // Ensures visible size
+        );
         this.velocity = Vector3D.random3D();
         this.velocity.multiply(2 + Math.random() * 2);
         this.acceleration = new Vector3D(0, 0, 0);
@@ -28,6 +36,7 @@ public class Boid {
     }
 
     public void edges(double width, double height) {
+        System.out.println("Checking edges for position: " + position);
         if (position.x > width) position.x = 0;
         else if (position.x < 0) position.x = width;
 
@@ -38,6 +47,10 @@ public class Boid {
         if (position.z > 100) position.z = 0;
         else if (position.z < 0) position.z = 100;
     }
+    public Vector3D getPosition() {
+        return position;
+    }
+
 
     public Vector3D alignment(ArrayList<Boid> boids) {
         double perceptionRadius = 25;
@@ -126,19 +139,32 @@ public class Boid {
         acceleration.add(alignment);
         acceleration.add(cohesion);
         acceleration.add(separation);
+
+        System.out.println("Flock forces - Align: " + alignment +
+                " Cohesion: " + cohesion + " Sep: " + separation);
     }
 
     public void update() {
+        System.out.println("Updating boid position"); // Temporary debug
         position.add(velocity); //moves in the direction of the velocity
         velocity.add(acceleration); //changes the velocity based on the current acceleration
         velocity.limit(maxSpeed);
         acceleration.multiply(0); //it is diff for every frame
+        System.out.println("After update - Pos: " + position + " Vel: " + velocity);
     }
 
     public void show(Graphics g) {
         // size depends on z (depth) — closer (higher z) means larger
-        int size = (int) Math.max(2, Math.min(10, position.z * 0.1)); // scale z from 0–100 to 2–10
+//        int size = (int) Math.max(2, Math.min(10, position.z * 0.1)); // scale z from 0–100 to 2–10
+//        System.out.println("Drawing boid at z=" + position.z + " with size=" + size);
+//        g.fillOval((int) position.x - size / 2, (int) position.y - size / 2, size, size);
 
-        g.fillOval((int) position.x - size / 2, (int) position.y - size / 2, size, size);
+//        int size = 5;
+//        g.fillOval((int)position.x - size/2, (int)position.y - size/2, size, size);
+
+        // Size depends on z (depth) - closer (higher z) means larger
+        // Scale z from 30-70 (based on your initialization) to size range 3-10
+        int size = (int) Math.max(3, Math.min(10, 3 + (position.z - 30) * (7.0 / 40.0)));
+        g.fillOval((int)position.x - size/2, (int)position.y - size/2, size, size);
     }
 }

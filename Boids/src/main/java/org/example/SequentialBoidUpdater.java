@@ -3,7 +3,7 @@ package org.example;
 import javax.swing.*;
 import java.util.ArrayList;
 
-public class ParallelBoidUpdater implements BoidUpdater {
+public class SequentialBoidUpdater implements BoidUpdater {
     private JSlider cohesionSlider, alignmentSlider, separationSlider;
     private Boids boidsPanel;
 
@@ -51,34 +51,11 @@ public class ParallelBoidUpdater implements BoidUpdater {
             int currentWidth = boidsPanel.getWidth();
             int currentHeight = boidsPanel.getHeight();
 
-            int numThreads = Runtime.getRuntime().availableProcessors();
-            int chunkSize = (int) Math.ceil((double) flock.size() / numThreads);
-
-            Thread[] threads = new Thread[numThreads];
-
-            for (int i = 0; i < numThreads; i++) {
-                final int start = i * chunkSize;
-                final int end = Math.min(flock.size(), start + chunkSize);
-
-                threads[i] = new Thread(() -> {
-                    for (int j = start; j < end; j++) {
-                        Boid boid = flock.get(j);
-                        boid.edges(currentWidth, currentHeight);
-                        boid.flock(flock, cohesionWeight, alignmentWeight, separationWeight);
-                        boid.update();
-                    }
-                });
-                threads[i].start();
+            for (Boid boid : flock) {
+                boid.edges(currentWidth, currentHeight);
+                boid.flock(flock, cohesionWeight, alignmentWeight, separationWeight);
+                boid.update();
             }
-
-            for (Thread t : threads) {
-                try {
-                    t.join();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-            }
-
             boidsPanel.repaint();
         });
         timer.start();

@@ -7,17 +7,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class SetupFrame extends JFrame {
-    public SetupFrame() {
-        setTitle("Setup Boids");
+    private BoidUpdater updater;
+    private String title;
+
+    // Constructor for all versions
+    public SetupFrame(String title, BoidUpdater updater) {
+        this.title = title;
+        this.updater = updater;
+        initializeUI();
+    }
+
+    private void initializeUI() {
+        setTitle(title + " - Setup");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setSize(300, 400);
         setMinimumSize(new Dimension(400, 500));
-
         setLocationRelativeTo(null);
         getContentPane().setBackground(Color.BLACK);
 
-        //title
+        // Title panel
         JPanel titlePanel = new JPanel();
         titlePanel.setBackground(Color.BLACK);
         JLabel titleLabel = new JLabel("BOIDS", JLabel.CENTER);
@@ -25,107 +34,112 @@ public class SetupFrame extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 50));
         titlePanel.add(titleLabel);
 
-        // create a panel for the input fields with some padding
+        // Input panel
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBackground(Color.BLACK);
         inputPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 15, 5); //add margin between components
+        gbc.insets = new Insets(5, 5, 15, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel widthLabel = createCustomLabel("Window Width:");
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        inputPanel.add(widthLabel, gbc);
-
-        JTextField widthField = createCustomTextField("640");
+        // Add input fields
+        gbc.gridx = 0; gbc.gridy = 0;
+        inputPanel.add(createCustomLabel("Window Width:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 0;
-        inputPanel.add(widthField, gbc);
+        inputPanel.add(createCustomTextField("800"), gbc);
 
-        JLabel heightLabel = createCustomLabel("Window Height:");
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        inputPanel.add(heightLabel, gbc);
-
-        JTextField heightField = createCustomTextField("400");
+        gbc.gridx = 0; gbc.gridy = 1;
+        inputPanel.add(createCustomLabel("Window Height:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
-        inputPanel.add(heightField, gbc);
+        inputPanel.add(createCustomTextField("600"), gbc);
 
-        JLabel numBoidsLabel = createCustomLabel("Number of Boids:");
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        inputPanel.add(numBoidsLabel, gbc);
-
-        JTextField numBoidsField = createCustomTextField("100");
+        gbc.gridx = 0; gbc.gridy = 2;
+        inputPanel.add(createCustomLabel("Number of Boids:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
-        inputPanel.add(numBoidsField, gbc);
+        inputPanel.add(createCustomTextField("100"), gbc);
 
-        JLabel speedLabel = createCustomLabel("Initial Boid Speed:");
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        inputPanel.add(speedLabel, gbc);
-
-        JTextField speedField = createCustomTextField("3");
+        gbc.gridx = 0; gbc.gridy = 3;
+        inputPanel.add(createCustomLabel("Initial Boid Speed:"), gbc);
         gbc.gridx = 1;
-        gbc.gridy = 3;
-        inputPanel.add(speedField, gbc);
+        inputPanel.add(createCustomTextField("2.0"), gbc);
 
-        add(titlePanel, BorderLayout.NORTH);
-        add(inputPanel, BorderLayout.CENTER);
-
-        JLabel modeLabel = createCustomLabel("Simulation Mode:");
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        inputPanel.add(modeLabel, gbc);
-
-        String[] modes = {"Sequential", "Parallel", "Distributed"};
-        JComboBox<String> modeComboBox = new JComboBox<>(modes);
-        modeComboBox.setFont(new Font("Arial", Font.PLAIN, 14));
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        inputPanel.add(modeComboBox, gbc);
-
+        // Start button
         JButton startButton = new JButton("Start Simulation");
         startButton.setFont(new Font("Arial", Font.BOLD, 16));
         startButton.setForeground(Color.BLACK);
         startButton.setBackground(Color.WHITE);
 
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    int numBoids = Integer.parseInt(numBoidsField.getText());
-                    int width = Integer.parseInt(widthField.getText());
-                    int height = Integer.parseInt(heightField.getText());
-                    double speed = Double.parseDouble(speedField.getText());
-                    String selectedMode = (String) modeComboBox.getSelectedItem();
-
-                    dispose(); //close setup
-
-                    JFrame frame = new JFrame("Boids Simulation");
-                    //Boids simulation = new Boids(numBoids, width, height, speed);
-                    Boids simulation = new Boids(numBoids, width, height, speed, selectedMode);
-
-                    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                    frame.setMinimumSize(new Dimension(300, 300));
-                    frame.add(simulation);
-                    frame.pack();
-                    frame.setLocationRelativeTo(null);
-                    frame.setVisible(true);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(SetupFrame.this, "Please enter valid numbers for all fields.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBackground(Color.BLACK);
         buttonPanel.setBorder(new EmptyBorder(10, 0, 10, 0));
         buttonPanel.add(startButton);
+
+        // Add components to frame
+        add(titlePanel, BorderLayout.NORTH);
+        add(inputPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // Action listener
+        startButton.addActionListener(e -> {
+            try {
+                int width = Integer.parseInt(((JTextField)inputPanel.getComponent(1)).getText());
+                int height = Integer.parseInt(((JTextField)inputPanel.getComponent(3)).getText());
+                int numBoids = Integer.parseInt(((JTextField)inputPanel.getComponent(5)).getText());
+                double speed = Double.parseDouble(((JTextField)inputPanel.getComponent(7)).getText());
+
+                dispose();
+                startSimulation(numBoids, width, height, speed);
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Please enter valid numerical values.",
+                        "Input Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+
+    private void startSimulation(int numBoids, int width, int height, double speed) {
+        JFrame frame = new JFrame(title);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Create appropriate simulation panel
+        Boids boidsPanel = new Boids(width, height, updater);
+        updater.setParameters(numBoids, width, height, speed);
+        updater.setBoidsPanel(boidsPanel);
+        frame.add(boidsPanel);
+
+        // Add sliders
+        JPanel sliderPanel = new JPanel();
+        sliderPanel.setLayout(new GridLayout(2, 3));
+        sliderPanel.setOpaque(false);
+
+        JLabel cohesionLabel = new JLabel("Cohesion", JLabel.CENTER);
+        JLabel alignmentLabel = new JLabel("Alignment", JLabel.CENTER);
+        JLabel separationLabel = new JLabel("Separation", JLabel.CENTER);
+
+        JSlider cohesionSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        JSlider alignmentSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+        JSlider separationSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+
+        sliderPanel.add(cohesionLabel);
+        sliderPanel.add(alignmentLabel);
+        sliderPanel.add(separationLabel);
+        sliderPanel.add(cohesionSlider);
+        sliderPanel.add(alignmentSlider);
+        sliderPanel.add(separationSlider);
+
+        frame.add(sliderPanel, BorderLayout.SOUTH);
+        updater.setSliders(cohesionSlider, alignmentSlider, separationSlider);
+
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        frame.setResizable(false);
+
+
+        updater.start();
     }
 
     private JLabel createCustomLabel(String text) {
@@ -143,11 +157,5 @@ public class SetupFrame extends JFrame {
         textField.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         textField.setCaretColor(Color.BLACK);
         return textField;
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new SetupFrame().setVisible(true);
-        });
     }
 }
