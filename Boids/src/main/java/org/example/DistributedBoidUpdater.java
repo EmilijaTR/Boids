@@ -34,19 +34,18 @@ public class DistributedBoidUpdater implements BoidUpdater {
         this.boidsPanel = boidsPanel;
         this.isRootProcess = MPI.COMM_WORLD.Rank() == 0;
 
-        if (isRootProcess) {
+        if (isRootProcess) { //only one process does it!
             ArrayList<Boid> flock = new ArrayList<>();
             for (int i = 0; i < numBoids; i++) {
                 flock.add(new Boid(width, height, initialSpeed));
             }
             boidsPanel.setFlock(flock);
-            System.out.println("Initialized " + numBoids + " boids on root");
         }
     }
 
     @Override
     public void start() {
-        int rank = MPI.COMM_WORLD.Rank();
+        //int rank = MPI.COMM_WORLD.Rank();
 
         if (isRootProcess) {
             timer = new Timer(16, e -> updateBoids());
@@ -62,7 +61,7 @@ public class DistributedBoidUpdater implements BoidUpdater {
         int rank = MPI.COMM_WORLD.Rank();
         int size = MPI.COMM_WORLD.Size();
 
-        // Broadcast weights from root
+        //broadcast weights of sliders from root
         double[] weights = new double[3];
         if (rank == 0) {
             weights[0] = cohesionSlider.getValue() / 50.0;
@@ -74,7 +73,7 @@ public class DistributedBoidUpdater implements BoidUpdater {
         double alignmentWeight = weights[1];
         double separationWeight = weights[2];
 
-        // Prepare data structures
+        //prepare th data structures
         double[] positions = null;
         double[] velocities = null;
         int[] boidCounts = new int[size];
@@ -96,7 +95,7 @@ public class DistributedBoidUpdater implements BoidUpdater {
                 velocities[i*3+2] = b.getVelocity().z;
             }
 
-            // Calculate distribution
+            //calculate distribution
             int baseChunk = flock.size() / size;
             int remainder = flock.size() % size;
             for (int i = 0; i < size; i++) {
@@ -105,35 +104,34 @@ public class DistributedBoidUpdater implements BoidUpdater {
             }
         }
 
-        // Broadcast counts and displacements
+        //broadcast counts and displacements
         MPI.COMM_WORLD.Bcast(boidCounts, 0, size, MPI.INT, 0);
         MPI.COMM_WORLD.Bcast(displacements, 0, size, MPI.INT, 0);
 
-        // Prepare receive buffers
+        //prep receive buffers
         int myCount = boidCounts[rank];
         double[] myPositions = new double[myCount];
         double[] myVelocities = new double[myCount];
 
-        // Scatter data
+        //scatterrrr
         MPI.COMM_WORLD.Scatterv(positions, 0, boidCounts, displacements, MPI.DOUBLE,
                 myPositions, 0, myCount, MPI.DOUBLE, 0);
         MPI.COMM_WORLD.Scatterv(velocities, 0, boidCounts, displacements, MPI.DOUBLE,
                 myVelocities, 0, myCount, MPI.DOUBLE, 0);
 
-        // Broadcast full flock data for flocking rules
-        double[] fullFlockPositions = null;
-        double[] fullFlockVelocities = null;
+        //broadcast full flock data for flocking rules
+        double[] fullFlockPositions, fullFlockVelocities;
         if (rank == 0) {
             fullFlockPositions = positions.clone();
             fullFlockVelocities = velocities.clone();
         } else {
-            fullFlockPositions = new double[boidCounts[0] * size]; // Approximate size
+            fullFlockPositions = new double[boidCounts[0] * size];
             fullFlockVelocities = new double[boidCounts[0] * size];
         }
         MPI.COMM_WORLD.Bcast(fullFlockPositions, 0, fullFlockPositions.length, MPI.DOUBLE, 0);
         MPI.COMM_WORLD.Bcast(fullFlockVelocities, 0, fullFlockVelocities.length, MPI.DOUBLE, 0);
 
-        // Create local flock for processing
+        // create local flock for processing
         ArrayList<Boid> localFlock = new ArrayList<>();
         for (int i = 0; i < myCount / 3; i++) {
             Boid b = new Boid(width, height, initialSpeed);
@@ -146,7 +144,7 @@ public class DistributedBoidUpdater implements BoidUpdater {
             localFlock.add(b);
         }
 
-        // Create full flock for rules
+        // then create full flock for rules
         ArrayList<Boid> fullFlock = new ArrayList<>();
         for (int i = 0; i < fullFlockPositions.length / 3; i++) {
             Boid b = new Boid(width, height, initialSpeed);
@@ -159,14 +157,14 @@ public class DistributedBoidUpdater implements BoidUpdater {
             fullFlock.add(b);
         }
 
-        // Process each boid
+        //now process each boid
         for (Boid b : localFlock) {
             b.edges(width, height);
             b.flock(fullFlock, cohesionWeight, alignmentWeight, separationWeight);
             b.update();
         }
 
-        // Store updated values
+        //store updated values
         for (int i = 0; i < localFlock.size(); i++) {
             Boid b = localFlock.get(i);
             myPositions[i*3] = b.getPosition().x;
@@ -177,21 +175,21 @@ public class DistributedBoidUpdater implements BoidUpdater {
             myVelocities[i*3+2] = b.getVelocity().z;
         }
 
-        // Gather results
+        //and gatherrr results
         MPI.COMM_WORLD.Gatherv(myPositions, 0, myCount, MPI.DOUBLE,
                 positions, 0, boidCounts, displacements, MPI.DOUBLE, 0);
         MPI.COMM_WORLD.Gatherv(myVelocities, 0, myCount, MPI.DOUBLE,
                 velocities, 0, boidCounts, displacements, MPI.DOUBLE, 0);
-        if (rank == 0) {
-            System.out.println("Total boids received: " + (positions.length / 3));
-        }
+//        if (rank == 0) {
+//            System.out.println("Total boids received: " + (positions.length / 3));
+//        }
 
-        // Root process updates display
+        //only root process updates display
         if (rank == 0) {
             ArrayList<Boid> flock = boidsPanel.getFlock();
             for (int i = 0; i < flock.size(); i++) {
                 Boid b = flock.get(i);
-                if (i < positions.length / 3) {  // Safety check
+                if (i < positions.length / 3) {
                     b.getPosition().x = positions[i*3];
                     b.getPosition().y = positions[i*3+1];
                     b.getPosition().z = positions[i*3+2];
@@ -200,11 +198,6 @@ public class DistributedBoidUpdater implements BoidUpdater {
                     b.getVelocity().z = velocities[i*3+2];
                 }
             }
-
-            System.out.printf("Boid 0 updated to: (%.1f,%.1f,%.1f)\n",
-                    flock.get(0).getPosition().x,
-                    flock.get(0).getPosition().y,
-                    flock.get(0).getPosition().z);
 
             SwingUtilities.invokeLater(() -> {
                 boidsPanel.repaint();
